@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>My map</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
+    <!-- <link rel="stylesheet" type="text/css" href="map.css" /> -->
+    <style>
+      svg path {
+        fill: none;
+        stroke: #999;
+      }
+      .pumps {
+        stroke: #0d5dc5;
+        fill: #0d5dc5;
+      }
+      .label {
+        font-family: sans-serif;
+        font-size: 11px;
+        fill: #3c373d;
+        background-color: red;
+        border: 1px solid lightgray;
+      }
+      .deaths {
+        fill: red;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container" class="svg-container">
+      <svg id="mysvg" width="1000" height="1000"></svg>
+    </div>
+    <script type="text/javascript">
+      const logg = (whatever) => {
+        console.log(whatever);
+      };
+      const w = 1000;
+      const h = 1000;
+
+      //get the data
+      const rawdata = d3.json("./streets.json");
+      const pumps = d3.csv("./pumps.csv");
+      const deathpoints = d3.csv("./deaths_age_sex.csv");
+      //do scale linear of x and y values
+
+      let streetX = d3.scaleLinear().domain([0, 20]).range([0, w]);
+      let streetY = d3.scaleLinear().domain([0, 20]).range([0, h]);
+      // define line
+      let line = d3
+        .line()
+        .x((d) => streetX(d.x))
+        .y((d) => streetY(d.y));
+
+      //wait for all promises to return then draw
+      Promise.all([rawdata, pumps, deathpoints]).then((values) => {
+        values[0].map((arr) => {
+          //draw map
+          d3.select("svg#mysvg")
+            .append("path")
+            .attr("d", line(arr))
+            .attr("stroke", "black");
+        });
+        //draw pumps
+        values[1].map((item) => {
+          d3.select("svg#mysvg")
+            .append("circle")
+            .attr("cx", streetX(item.x))
+            .attr("cy", streetY(item.y))
+            .classed("pumps", true)
+            .attr("r", "4px");
+        });
+        //draw death points
+        values[2].map((item) => {
+          d3.select("svg#mysvg")
+            .append("circle")
+            .attr("cx", streetX(item.x))
+            .attr("cy", streetY(item.y))
+            .classed("deaths", true)
+            .attr("r", "2px");
+        });
+        //show gender and age text
+        values[2].map((item) => {
+          const whatgender = (gender) => {
+            if (gender === 1) {
+              return "F";
+            }
+            return "M";
+          };
+          d3.select("svg#mysvg")
+            .append("text")
+            .text(item.age + whatgender(item.gender))
+            .attr("x", streetX(item.x))
+            .classed("label", true)
+            .attr("y", streetY(item.y));
+          // .attr("r", "1px");
+        });
+      });
+    </script>
+  </body>
+</html>

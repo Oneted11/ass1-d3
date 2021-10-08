@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>My map</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
+    <!-- <link rel="stylesheet" type="text/css" href="map.css" /> -->
+    <style>
+      path {
+        fill: none;
+        stroke: #999;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container" class="svg-container"></div>
+    <svg id="mysvg" width="1000" height="700"></svg>
+    <script type="text/javascript">
+      const logg = (whatever) => {
+        console.log(whatever);
+      };
+      const w = 1000;
+      const h = 600;
+
+      // var svg = d3.select("div#container").append("svg").attr('style');
+
+      //get the data
+      const rawdata = d3.json("./streets.json");
+
+      //do scale linear of x and y values
+
+      let streetX = d3.scaleLinear().domain([0, 20]).range([0, w]);
+      let streetY = d3.scaleLinear().domain([0, 20]).range([0, h]);
+      // define line
+      let line = d3
+        .line()
+        .x((d) => streetX(d.x))
+        .y((d) => streetY(d.y));
+
+      //wait for all promises to return then draw
+      Promise.all([rawdata]).then((values) => {
+        //failed:set variable points with all aggregate point segments by flattening the array
+        // let points = values[0].flat();
+        // console.error("points array", points);
+
+        //plan0 change all of the iterations to old school for loops
+        //plan1 make a function declaring d to iterate through values[0] producing line segments
+        //plan2 store all line segments in a var and pass that to d
+        //plan3 ask for assistance from the world
+
+        //try variable housing all line segments
+        // let segs = () => {
+        //   values[0].map((ar) => {
+        //     line(ar);
+        //     logg(segs);
+        //   });
+        // };
+        // see the values[0] which is an array of line segment arrays
+        // console.log("1", values[0]);
+
+        //loop through all arrays of xy objects within the line segemnt master array
+        // for (let i = 0; i < values[0].length; i++) {
+        //   //do stuff
+        //   logg(values[0][i]);
+        // }
+
+        values[0].map((arr) => {
+          //arr is the array of objectts defining our line segments
+          // console.log("got here 1", arr);
+          // let segarr = [];
+          // console.log("line  should output now", line(arr));
+          // segarr.push(line(arr));
+          // console.log("this is segarr", segarr);
+          // draw path
+          // svg
+          //   .selectAll("path")
+          //   .data(arr)
+          //   .enter()
+          //   // .append("path")
+          //   //ideafor mrning, mame a line function that iterates over arr in the d func
+          //   .append("d", line(arr));
+          //create svg we'll be loading data into
+          d3.select("svg#mysvg")
+            .append("path")
+            .attr("d", line(arr))
+            .attr("stroke", "black");
+        });
+      });
+    </script>
+  </body>
+</html>
