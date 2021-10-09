@@ -33,6 +33,7 @@
     <!-- <div id="container" class="svg-container"> -->
     <svg id="mysvg" width="1000" height="1000"><g></g></svg>
     <!-- </div> -->
+    <svg id="barchart" width="1000" height="600"></svg>
     <script type="text/javascript">
       const logg = (whatever) => {
         console.log(whatever);
@@ -44,6 +45,7 @@
       const rawdata = d3.json("./streets.json");
       const pumps = d3.csv("./pumps.csv");
       const deathpoints = d3.csv("./deaths_age_sex.csv");
+      const deathdays = d3.csv("./deathdays.csv");
       //do scale linear of x and y values
 
       let streetX = d3.scaleLinear().domain([0, 20]).range([0, w]);
@@ -55,7 +57,7 @@
         .y((d) => streetY(d.y));
 
       //wait for all promises to return then draw
-      Promise.all([rawdata, pumps, deathpoints]).then((values) => {
+      Promise.all([rawdata, pumps, deathpoints, deathdays]).then((values) => {
         values[0].map((arr) => {
           //draw map
           d3.select("svg#mysvg g")
@@ -98,7 +100,7 @@
           // .attr("r", "1px");
         });
         // zoom and pan
-        logg(d3.select("svg#mysvg g"));
+
         let zoom = d3.zoom().on("zoom", handleZoom);
 
         function handleZoom(e) {
@@ -109,6 +111,77 @@
           d3.select("svg#mysvg").call(zoom);
         }
         initZoom();
+
+        //barchart
+        let bardata = values[3];
+        let bchart = d3.select("svg#barchart");
+        let color = "steelblue";
+        let height = 400;
+        let width = 1000;
+        let margin = { top: 30, right: 0, bottom: 30, left: 40 };
+        logg(d3.max(bardata, (d) => d.deaths));
+        //scale
+        x = d3
+          .scaleBand()
+          .domain(d3.range(bardata.length))
+          .range([margin.left, width - margin.right])
+          .padding(0.1);
+        y = d3
+          .scaleLinear()
+          .domain([0, 150])
+          .nice()
+          .range([height - margin.bottom, margin.top]);
+        //axes
+        yAxis = (g) =>
+          g
+            .attr("transform", `translate(${margin.left},0)`)
+            .call(d3.axisLeft(y).ticks(null, bardata.format))
+            .call((g) => g.select(".domain").remove())
+            .call((g) =>
+              g
+                .append("text")
+                .attr("x", -margin.left)
+                .attr("y", 10)
+                .attr("fill", "currentColor")
+                .attr("text-anchor", "start")
+                .text(bardata.deaths)
+            );
+
+        xAxis = (g) =>
+          g
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+            .call(
+              d3
+                .axisBottom(x)
+                .tickFormat((i) => bardata[i].date)
+                .tickSizeOuter(0)
+            )
+            .call((g) =>
+              g
+                .selectAll(".tick text")
+                .attr("transform", "rotate(-90)")
+                .attr("text-anchor", "end")
+                .attr("x", -10)
+                .attr("y", -5)
+            );
+        // .attr("transform", "rotate(-90)");
+        //draw chart
+        d3.select("svg#barchart")
+          .append("g")
+          .attr("fill", color)
+          .selectAll("rect")
+          .data(bardata)
+          .join("rect")
+          .attr("x", (d, i) => x(i))
+          .attr("y", (d) => y(d.deaths))
+          .attr("height", (d) => y(0) - y(d.deaths))
+          .attr("width", x.bandwidth());
+        d3.select("svg#barchart").append("g").call(xAxis);
+        // .attr("transform", "rotate(-90)");
+
+        d3.select("svg#barchart").append("g").call(yAxis);
+
+        //end
       });
     </script>
   </body>
