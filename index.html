@@ -210,16 +210,17 @@
             stopi = cf;
             // logg(starti);
             // logg(stopi);
-            // logg(deathdata);
+            logg(deathdata);
+            let deathdataToDisplay;
             if (starti != undefined && stopi != undefined) {
               logg(1);
-              deathdata = deathdata.slice(starti, stopi);
+              deathdataToDisplay = deathdata.slice(starti, stopi);
             }
             logg(starti);
             // logg(deathdata);
             d3.selectAll("svg#mysvg .deaths").remove();
             d3.selectAll("svg#mysvg .label").remove();
-            deathdata.map((item) => {
+            deathdataToDisplay.map((item) => {
               d3.select("svg#mysvg g")
                 .append("circle")
                 .attr("cx", streetX(item.x))
@@ -227,6 +228,7 @@
                 .classed("deaths", true)
                 .attr("r", "1px");
             });
+            deathdata = values[2];
           });
 
         //end
