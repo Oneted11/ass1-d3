@@ -26,13 +26,18 @@
       }
       .deaths {
         fill: red;
+        stroke: red;
       }
     </style>
   </head>
   <body>
     <!-- <div id="container" class="svg-container"> -->
+    <h1>LONDON 1854 CHOLERA PANDEMIC</h1>
+    <a href="./about">about</a>
+    <h2>MAP OF DISTRIBUTION OF WATER PUMPS AND DEATHS BY CHOLERA</h2>
     <svg id="mysvg" width="1000" height="1000"><g></g></svg>
     <!-- </div> -->
+    <h2>MAP OF DEATHS OCCURED DURING THE PANDEMIC</h2>
     <svg id="barchart" width="1000" height="600"></svg>
     <script type="text/javascript">
       const logg = (whatever) => {
@@ -48,8 +53,8 @@
       const deathdays = d3.csv("./deathdays.csv");
       //do scale linear of x and y values
 
-      let streetX = d3.scaleLinear().domain([0, 20]).range([0, w]);
-      let streetY = d3.scaleLinear().domain([0, 20]).range([0, h]);
+      let streetX = d3.scaleLinear().domain([3, 20]).range([0, w]);
+      let streetY = d3.scaleLinear().domain([3, 20]).range([0, h]);
       // define line
       let line = d3
         .line()
@@ -75,7 +80,16 @@
             .attr("r", "4px");
         });
         //draw death points
-        values[2].map((item) => {
+        var deathdata = values[2];
+        let starti;
+        let stopi;
+        if (starti != undefined && stopi != undefined) {
+          logg(1);
+          deathdata = deathdata.slice(starti, stopi);
+        }
+        logg(starti);
+        // logg(deathdata);
+        deathdata.map((item) => {
           d3.select("svg#mysvg g")
             .append("circle")
             .attr("cx", streetX(item.x))
@@ -84,21 +98,21 @@
             .attr("r", "1px");
         });
         //show gender and age text
-        values[2].map((item) => {
-          const whatgender = (gender) => {
-            if (gender === 1) {
-              return "F";
-            }
-            return "M";
-          };
-          d3.select("svg#mysvg g")
-            .append("text")
-            .text(item.age + whatgender(item.gender))
-            .attr("x", streetX(item.x))
-            .classed("label", true)
-            .attr("y", streetY(item.y));
-          // .attr("r", "1px");
-        });
+        // values[2].map((item) => {
+        //   const whatgender = (gender) => {
+        //     if (gender === 1) {
+        //       return "F";
+        //     }
+        //     return "M";
+        //   };
+        //   d3.select("svg#mysvg g")
+        //     .append("text")
+        //     .text(item.age + whatgender(item.gender))
+        //     .attr("x", streetX(item.x))
+        //     .classed("label", true)
+        //     .attr("y", streetY(item.y));
+
+        // });
         // zoom and pan
 
         let zoom = d3.zoom().on("zoom", handleZoom);
@@ -113,13 +127,21 @@
         initZoom();
 
         //barchart
-        let bardata = values[3];
+
+        let total = 0;
+        let bardata = values[3].map((item) => {
+          item["cf"] = total + parseInt(item.deaths);
+          total += parseInt(item.deaths);
+          return item;
+        });
+        // logg(exp);
+        // let bardata = values[3];
         let bchart = d3.select("svg#barchart");
         let color = "steelblue";
         let height = 400;
         let width = 1000;
         let margin = { top: 30, right: 0, bottom: 30, left: 40 };
-        logg(d3.max(bardata, (d) => d.deaths));
+        // logg(d3.max(bardata, (d) => d.deaths));
         //scale
         x = d3
           .scaleBand()
@@ -177,9 +199,35 @@
           .attr("height", (d) => y(0) - y(d.deaths))
           .attr("width", x.bandwidth());
         d3.select("svg#barchart").append("g").call(xAxis);
-        // .attr("transform", "rotate(-90)");
 
         d3.select("svg#barchart").append("g").call(yAxis);
+
+        d3.select("svg#barchart")
+          .selectAll("rect")
+          .on("click", function (d) {
+            const { deaths, cf } = d.target.__data__;
+            starti = cf - deaths;
+            stopi = cf;
+            // logg(starti);
+            // logg(stopi);
+            // logg(deathdata);
+            if (starti != undefined && stopi != undefined) {
+              logg(1);
+              deathdata = deathdata.slice(starti, stopi);
+            }
+            logg(starti);
+            // logg(deathdata);
+            d3.selectAll("svg#mysvg .deaths").remove();
+            d3.selectAll("svg#mysvg .label").remove();
+            deathdata.map((item) => {
+              d3.select("svg#mysvg g")
+                .append("circle")
+                .attr("cx", streetX(item.x))
+                .attr("cy", streetY(item.y))
+                .classed("deaths", true)
+                .attr("r", "1px");
+            });
+          });
 
         //end
       });
