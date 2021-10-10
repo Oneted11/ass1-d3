@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+
     <title>My map</title>
     <script
       type="text/javascript"
@@ -14,6 +15,7 @@
       /* } */
       #mysvg {
         flex: auto;
+        background-color: #e5f0f3;
       }
       svg path {
         fill: none;
@@ -30,22 +32,23 @@
         background-color: red;
         border: 1px solid lightgray;
       }
-      .deaths {
+      /* .deaths {
         fill: red;
         stroke: red;
-      }
+      } */
     </style>
   </head>
   <body>
     <!-- <div id="container" class="svg-container"> -->
     <h1>LONDON 1854 CHOLERA PANDEMIC</h1>
-    <a href="./about">about</a>
+    <a href="./about.html">about</a>
     <h2>MAP OF DISTRIBUTION OF WATER PUMPS AND DEATHS BY CHOLERA</h2>
     <div style="display: flex">
       <svg id="mysvg" width="1000" height="1000"><g></g></svg>
       <svg id="my_dataviz" height="1000" width="200"></svg>
     </div>
     <h2>MAP OF DEATHS OCCURED DURING THE PANDEMIC</h2>
+    <h5>click bar graph to view deaths by day on above map</h5>
     <svg id="barchart" width="1000" height="600"></svg>
     <script type="text/javascript">
       const logg = (whatever) => {
@@ -99,7 +102,7 @@
         // logg(deathdata);
         deathdata.map((item) => {
           const whatgender = (gender) => {
-            if (gender === 1) {
+            if (gender === "1") {
               return "Female";
             }
             return "Male";
@@ -109,7 +112,8 @@
             .attr("cx", streetX(item.x))
             .attr("cy", streetY(item.y))
             .classed("deaths", true)
-            .attr("r", "1px")
+            .attr("r", "1.5px")
+            .style("fill", item.gender === "1" ? "green" : "orange")
             .append("svg:title")
             .text(() => {
               return "Age: " + item.age + " Gender: " + whatgender(item.gender);
@@ -148,7 +152,13 @@
           .attr("cx", 40)
           .attr("cy", 155)
           .attr("r", 6)
-          .style("fill", "red");
+          .style("fill", "green");
+        svg1
+          .append("circle")
+          .attr("cx", 40)
+          .attr("cy", 185)
+          .attr("r", 6)
+          .style("fill", "orange");
         svg1
           .append("text")
           .attr("x", 60)
@@ -160,13 +170,27 @@
           .append("text")
           .attr("x", 60)
           .attr("y", 160)
-          .text("location of death")
+          .text("female death")
+          .style("font-size", "15px")
+          .attr("alignment-baseline", "middle");
+        svg1
+          .append("text")
+          .attr("x", 60)
+          .attr("y", 190)
+          .text("male death")
           .style("font-size", "15px")
           .attr("alignment-baseline", "middle");
 
         // zoom and pan
 
-        let zoom = d3.zoom().on("zoom", handleZoom);
+        let zoom = d3
+          .zoom()
+          .scaleExtent([1, 5])
+          .translateExtent([
+            [0, 0],
+            [1000, 1000],
+          ])
+          .on("zoom", handleZoom);
 
         function handleZoom(e) {
           d3.select("svg#mysvg g").attr("transform", e.transform);
@@ -260,6 +284,8 @@
         d3.select("svg#barchart")
           .selectAll("rect")
           .on("click", function (d) {
+            d3.selectAll("rect").attr("fill", color);
+            d3.select(this).attr("fill", "red");
             const { deaths, cf } = d.target.__data__;
             starti = cf - deaths;
             stopi = cf;
@@ -287,7 +313,8 @@
                 .attr("cx", streetX(item.x))
                 .attr("cy", streetY(item.y))
                 .classed("deaths", true)
-                .attr("r", "1px")
+                .attr("r", "1.5px")
+                .style("fill", item.gender === "1" ? "green" : "orange")
                 .append("svg:title")
                 .text(() => {
                   return (
